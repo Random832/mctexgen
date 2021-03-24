@@ -4,7 +4,8 @@ from .common import TextureReader
 import sys
 import os
 
-def do_convert(srcf, dstf):
+# timescale to repeat the source animation multiple times in the dst animation
+def do_convert(srcf, dstf, timescale=1):
     src = TextureReader(srcf)
     w = src.size
     nframe = 16
@@ -12,7 +13,7 @@ def do_convert(srcf, dstf):
 
     dsta = np.ndarray((nframe, w*2, w*2, src.nchan), np.uint8)
     for iframe in range(nframe):
-        fr = src.get_frame(iframe / nframe * src.nframe)
+        fr = src.get_frame(iframe / nframe * src.nframe * timescale)
         fr = np.roll(fr, w//2, (0, 1)) # center the original texture
         fr = np.roll(fr, iframe*px*w//nframe, 0) # directional flowing
         fr = np.tile(fr, (2, 2, 1))

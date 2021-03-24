@@ -2,30 +2,32 @@
 from PIL import Image
 import numpy as np
 import sys
+import pathlib
 from . import palettes
 
 @np.vectorize
 def _mul(a, b):
     return np.uint16(a)*b//255
 
+color_warned = False
+
 def load_base_image(filename):
+    global color_warned
+    filename = pathlib.Path(filename)
     "Returns a tuple of two numpy arrays representing the gray and alpha channels."
     imgp = Image.open(filename)
-    imga = np.array(imgp)
     alpha = None # np.uint8(255)
     # scalar will be broadcast when used in final calculation
     grays = None
-    if imgp.mode in ('RGBA', 'LA'):
-        alpha = imga[:,:,-1]
-    if imgp.mode in ('RGBA', 'RGB'):
-        print(f'Warning: Using green channel of RGB source image {filename!r}. This may change in the future.')
-        grays = imga[:,:,1]
-    elif imgp.mode == 'LA':
-        print('Grayscale source image ^_^')
-        grays = imga[:,:,0]
-    elif imgp.mode == 'L':
-        print('Grayscale source image ^_^')
-        grays = imga[:,:]
+    if imgp.mode in ('RGBA', 'RGB', 'P'):
+        print(f'Warning: converting color image {filename.stem} to grayscale.')
+        if not color_warned:
+            color_warned = True
+            print(f'Warning: The meaning of color pixels might change in the future.')
+    imgp = imgp.convert('LA')
+    imga = np.array(imgp)
+    grays = imga[:,:,0]
+    alpha = imga[:,:,1]
     return grays, alpha
 
 def apply_palette(srcvalue, srcalpha, palette):

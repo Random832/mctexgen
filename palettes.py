@@ -31,13 +31,29 @@ def isempty(s):
     s = s.strip()
     return s == '' or s.startswith('#')
 
-def load_palette(filename):
-    d = {}
+def build_palette(d):
+    if 0 not in d:
+        d[0] = (0,0,0,255)
+    if 255 not in d:
+        d[255] = (255,255,255,255)
     pal = np.ndarray((256, 4), np.uint8)
     pal[:,0]=range(256)
     pal[:,1]=range(256)
     pal[:,2]=range(256)
     pal[:,3]=255
+    l = [*d.keys()]
+    l.sort()
+    for c0, c1 in zip(l, l[1:]):
+        r0, g0, b0, a0 = d[c0]
+        r1, g1, b1, a1 = d[c1]
+        pal[c0:c1+1, 0] = np.linspace(r0, r1, c1-c0+1, dtype=np.uint8)
+        pal[c0:c1+1, 1] = np.linspace(g0, g1, c1-c0+1, dtype=np.uint8)
+        pal[c0:c1+1, 2] = np.linspace(b0, b1, c1-c0+1, dtype=np.uint8)
+        pal[c0:c1+1, 3] = np.linspace(a0, a1, c1-c0+1, dtype=np.uint8)
+    return pal
+
+def load_palette_txt(filename):
+    d = {}
     for line in open(filename):
         if isempty(line):
             continue
@@ -57,12 +73,4 @@ def load_palette(filename):
                     continue
         else:
             print(f'Warning: Ignoring unknown line {line!r} in palette file {filename}')
-    l = [*d.keys()]
-    for c0, c1 in zip(l, l[1:]):
-        r0, g0, b0, a0 = d[c0]
-        r1, g1, b1, a1 = d[c1]
-        pal[c0:c1+1, 0] = np.linspace(r0, r1, c1-c0+1, dtype=np.uint8)
-        pal[c0:c1+1, 1] = np.linspace(g0, g1, c1-c0+1, dtype=np.uint8)
-        pal[c0:c1+1, 2] = np.linspace(b0, b1, c1-c0+1, dtype=np.uint8)
-        pal[c0:c1+1, 3] = np.linspace(a0, a1, c1-c0+1, dtype=np.uint8)
-    return pal
+    return build_palette(d)

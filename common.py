@@ -10,6 +10,9 @@ def interpolate(frame1, frame2, t):
 class TextureReader:
     def __init__(self, filename):
         srcp = Image.open(filename)
+        if srcp.mode == 'P':
+            # i cannot deal with this, won't try
+            srcp = srcp.convert('RGBA')
         array = np.array(srcp)
         if srcp.mode == 'L':
             h, w = array.shape
@@ -24,7 +27,7 @@ class TextureReader:
         self.metaframes = range(nframe)
         self.interpolate = True
         try:
-            meta = json.load(open(filename+'.mcmeta'))
+            meta = json.load(open(str(filename)+'.mcmeta'))
             if 'animation' in meta:
                 if 'frames' in meta['animation']:
                     self.metaframes = meta['animation']['frames']
@@ -37,6 +40,7 @@ class TextureReader:
         return len(self.metaframes)
 
     def get_frame(self, x):
+        x %= self.nframe
         n, t = divmod(x, 1)
         n = int(n)
         if not t or not self.interpolate:
